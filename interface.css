@@ -1,24 +1,28 @@
 .buttonConcentration {
-	border: none;
-    color: white;
-    padding: 14px 28px;
-    font-size: 16px;
-    cursor: pointer;
+	border: 2px solid black;
+	background-color: white;
+	color: black;
+	padding: 14px 28px;
+	font-size: 16px;
+	cursor: pointer;
 }
 
 #buttonMana {
-	background-color: #2196F3;
-}
-
-#buttonMana:hover {
-	background: #0b7dda;
+	border-color: #2196F3;
+	color: dodgerblue;
 }
 
 #buttonCutFocusGems {
-	background-color: #e7e7e7; 
+	border-color: #e7e7e7;
 	color: black;
 }
 
-#buttonCutFocusGems:hover {
-	background: #ddd;
+#buttonMana:visited {
+	border-color: #2196F3;
+	color: dodgerblue;
+}
+
+#buttonCutFocusGems:visited {
+	border-color: #e7e7e7;
+	color: black;
 }
