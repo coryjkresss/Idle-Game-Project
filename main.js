@@ -14,46 +14,27 @@ var Engine = {
 		Engine.Load();
 		Engine.Clock();
 	},
-	
-	// This function checks to see how many production cycles need to be run based on the time that has passed
-	// The cycles are split into a Production, Combat, and Display.
-	// I want a variable attack speed I needed to separate Production from Combat.
-	// The Display cycle is set up to only be called once after the game has executed all other game cycles.
+    
 	Clock: function() {
 		
-		// Stores the current time to be compared to.
 		var timeNow = Date.now();
 		
-		// Creates my delta time for each cycle, Production and Combat.
-		// Each cycle is tracked separately so that they can run at different speeds.
-		// The remainder is added to the delta time to avoid time loss.
 		timeDeltaProduction += timeNow - Engine.timeThen;
 		timeDeltaCombat += timeNow - Engine.timeThen;
-		
-		// Sets our new start time
 		Engine.timeThen = timeNow;
 		
 		// If statement to check if any number of cycles can be run
 		if(timeDeltaProduction >= Engine.cycleProduction) {
-			
-			// Passes the number of cycles rounded down to the Production function
 			Engine.Production(Math.floor(timeDeltaProduction / Engine.cycleProduction));
-			
-			// Updates GUI after cycles
-			Engine.Display();
-			
-			// Set our new delta to the remainder.
 			timeDeltaProduction %= Engine.cycleProduction;
 		}
 		
 		// Same as the Production if statement
 		if(timeDeltaCombat >= Engine.cycleCombat) {
 			Engine.Combat(Math.floor(timeDeltaCombat / Engine.cycleCombat));
-			Engine.Display();
 			timeDeltaCombat %= Engine.cycleCombat;
 		}	
 		
-		//Calls Engine.Clock again to check the time to see if any new cycles can be run.
 		window.requestAnimationFrame(Engine.Clock);
 	},
 	
