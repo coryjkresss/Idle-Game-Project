@@ -142,6 +142,18 @@ var Engine = {
 			golemSelectedMaterialCost);
 
 		Engine.golemArmy.push(golemCombined[0]);
+	},
+	
+	ConcentrationCheck: function(value) {
+		switch(value){
+			default:
+				console.log('Error in ConcentrationCheck function');
+				break;
+			case value = "Mana":
+				element.style.border-color: #2196F3;
+				element.style.color: dodgerblue;
+				
+				
 	}
 };
 
