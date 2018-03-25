@@ -23,18 +23,16 @@ var Engine = {
 		timeDeltaCombat += timeNow - Engine.timeThen;
 		Engine.timeThen = timeNow;
 		
-		// If statement to check if any number of cycles can be run
-		if(timeDeltaProduction >= Engine.cycleProduction) {
-			Engine.Production(Math.floor(timeDeltaProduction / Engine.cycleProduction));
-			timeDeltaProduction %= Engine.cycleProduction;
+		if(timeDeltaProduction >= Engine.cycleProduction || timeDeltaCombat >= Engine.cycleCombat) {
+			if(timeDeltaProduction >= Engine.cycleProduction) {
+				Engine.Production(Math.floor(timeDeltaProduction / Engine.cycleProduction));
+				timeDeltaProduction %= Engine.cycleProduction;
+			} else if(timeDeltaCombat >= Engine.cycleCombat) {
+				Engine.Combat(Math.floor(timeDeltaCombat / Engine.cycleCombat));
+				timeDeltaCombat %= Engine.cycleCombat;
+			}
+			Engine.Display();
 		}
-		
-		// Same as the Production if statement
-		if(timeDeltaCombat >= Engine.cycleCombat) {
-			Engine.Combat(Math.floor(timeDeltaCombat / Engine.cycleCombat));
-			timeDeltaCombat %= Engine.cycleCombat;
-		}	
-		
 		window.requestAnimationFrame(Engine.Clock);
 	},
 	
