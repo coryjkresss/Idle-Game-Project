@@ -150,8 +150,9 @@ var Engine = {
 				console.log('Error in ConcentrationCheck function');
 				break;
 			case value = "Mana":
-				element.style.border-color: #2196F3;
-				element.style.color: dodgerblue;
+				document.getElementById('buttonMana').style.borderColor: #2196F3;
+				document.getElementById('buttonMana').style.color: dodgerblue;
+				
 				
 				
 	}
