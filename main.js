@@ -1,13 +1,13 @@
 var Engine = {
 	
-	var golemArmy = [];
+	golemArmy: [],
 	
 	// Timing related Objects
-	var timeThen = Date.now();
-	var timeDeltaProduction = 0;
-	var timeDeltaCombat = 0;
-	var cycleProduction = 1000;
-	var cycleCombat = 500;
+	timeThen: Date.now(),
+	timeDeltaProduction: 0,
+	timeDeltaCombat: 0,
+	cycleProduction: 1000,
+	cycleCombat: 500,
 	
 	// 
 	Init: function() {
@@ -48,21 +48,12 @@ var Engine = {
 	
 	// Updates the display
 	Display: function() {
-		gold: null;
-		mana: null;
-		focusGems: null;
-		stone: null;
-		chiselledStone: null;
+		
 	},
 	
 	// Contains all of the information to be saved
 	playerData: {
-		timeLastPlayed: null;
-		gold: 0;
-		mana: 0;
-		focusGems: 0;
-		stone: 0;
-		chiselledStone: 0;
+  
 	},
 	
 	// Saves the current game by converting the playerData object into a string and storing the string in localStorage
@@ -144,18 +135,20 @@ var Engine = {
 		Engine.golemArmy.push(golemCombined[0]);
 	},
 	
-	ConcentrationCheck: function(value) {
-		switch(value){
+	Concentration: function(value) {
+		switch(value) {
 			default:
-				console.log('Error in ConcentrationCheck function');
+				console.log('Error in Concentration function');
 				break;
 			case value = "Mana":
-				document.getElementById('buttonMana').style.borderColor: #2196F3;
-				document.getElementById('buttonMana').style.color: dodgerblue;
-				
-				
-				
-	}
+				document.getElementByClass('buttonConcentration').style.background: null;
+				document.getElementById('buttonMana').style.background: #e7e7e7;
+				break;
+			case value = "Gems":
+				document.getElementByClass('buttonConcentration').style.background: null;
+				document.getElementById('buttonCutFocusGems').style.background: #e7e7e7;
+		}		
+	}	
 };
 
 window.onload = Engine.Init();
