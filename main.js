@@ -3,11 +3,11 @@ var Engine = {
 	var golemArmy = [];
 	
 	// Timing related Objects
-	timeThen: Date.now(),
-	timeDeltaProduction: 0,
-	timeDeltaCombat: 0,
-	cycleProduction: 1000,
-	cycleCombat: 500,
+	var timeThen = Date.now();
+	var timeDeltaProduction = 0;
+	var timeDeltaCombat = 0;
+	var cycleProduction = 1000;
+	var cycleCombat = 500;
 	
 	// 
 	Init: function() {
@@ -19,17 +19,17 @@ var Engine = {
 		
 		var timeNow = Date.now();
 		
-		timeDeltaProduction += timeNow - Engine.timeThen;
-		timeDeltaCombat += timeNow - Engine.timeThen;
+		Engine.timeDeltaProduction += timeNow - Engine.timeThen;
+		Engine.timeDeltaCombat += timeNow - Engine.timeThen;
 		Engine.timeThen = timeNow;
 		
-		if(timeDeltaProduction >= Engine.cycleProduction || timeDeltaCombat >= Engine.cycleCombat) {
-			if(timeDeltaProduction >= Engine.cycleProduction) {
-				Engine.Production(Math.floor(timeDeltaProduction / Engine.cycleProduction));
-				timeDeltaProduction %= Engine.cycleProduction;
-			} else if(timeDeltaCombat >= Engine.cycleCombat) {
-				Engine.Combat(Math.floor(timeDeltaCombat / Engine.cycleCombat));
-				timeDeltaCombat %= Engine.cycleCombat;
+		if(Engine.timeDeltaProduction >= Engine.cycleProduction || Engine.timeDeltaCombat >= Engine.cycleCombat) {
+			if(Engine.timeDeltaProduction >= Engine.cycleProduction) {
+				Engine.Production(Math.floor(Engine.timeDeltaProduction / Engine.cycleProduction));
+				Engine.timeDeltaProduction %= Engine.cycleProduction;
+			} else if(Engine.timeDeltaCombat >= Engine.cycleCombat) {
+				Engine.Combat(Math.floor(Engine.timeDeltaCombat / Engine.cycleCombat));
+				Engine.timeDeltaCombat %= Engine.cycleCombat;
 			}
 			Engine.Display();
 		}
