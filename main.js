@@ -1,5 +1,9 @@
 var Engine = {
 	
+	// Notes to self
+	// 4/3/18 - change rate calculations to delta's
+	// 4/3/18 - get save function up and running
+	
 	// Basic Resources
 	mana: 0,
 	roughCrystals: 0,
@@ -33,7 +37,7 @@ var Engine = {
 	creationRate: 0,
 	
 	// Player Statics
-	attunementLevel: 0,
+	attunementLevel: 1,
 	manaLevel: 1,
 	crystallizingLevel: 1,
 	cuttingLevel: 1,
@@ -41,7 +45,17 @@ var Engine = {
 	creationLevel: 1,
 	spellLevel: 1,
 	
+	// Player Adjusted Levels
+	manaAdjustedLevel: 0,
+	crystallizingAdjustedLevel: 0,
+	cuttingAdjustedLevel: 0,
+	infusingAdjustedLevel: 0,
+	creationAdjustedLevel: 0,
+	spellAdjustedLevel: 0,
+	
 	// Experience 
+	attunementExperience: 0,
+	attunementExperienceCheck: 0,
 	manaExperience: 0,
 	crystallizingExperience: 0,
 	cuttingExperience: 0,
@@ -73,6 +87,7 @@ var Engine = {
 	// 
 	Init: function() {
 		Engine.Load();
+		Engine.Display();
 		Engine.Clock();
 	},
     
@@ -100,7 +115,7 @@ var Engine = {
 	
 	// Contains all aspects of production
 	Production: function(value) {
-		
+			
 		Engine.SetCounters(0);
 		Engine.RateCalculations(value);
 		
@@ -125,13 +140,26 @@ var Engine = {
 	},
 	
 	RateCalculations: function(value) {
-		Engine.manaRate = (Engine.manaBase * Engine.attunementLevel + Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
+		
+		Engine.AttunementLevelAdjustment();
+		
+		Engine.manaRate = (Engine.manaBase * Engine.manaAdjustedLevel + Engine.manaConcentration * Engine.manaAdjustedLevel) * value;
 		Engine.manaConcentrationRate = Engine.manaConcentration * value;
-		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingLevel + Engine.attunementLevel;
-		Engine.cutRate = (Engine.cutCrystalBase * Engine.cuttingLevel + Engine.cuttingConcentration * Engine.cuttingLevel + Engine.attunementLevel) * value;
+		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingAdjustedLevel;
+		Engine.cutRate = (Engine.cutCrystalBase * Engine.cuttingAdjustedLevel + Engine.cuttingConcentration * Engine.cuttingAdjustedLevel) * value;
 		Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
-		Engine.infusingRate = (Engine.infusingBase * Engine.infusingLevel + Engine.infusingConcentration * Engine.infusingLevel + Engine.attunementLevel) * value;
+		Engine.infusingRate = (Engine.infusingBase * Engine.infusingAdjustedLevel + Engine.infusingConcentration * Engine.infusingAdjustedLevel) * value;
 		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;
+	},
+	
+	AttunementLevelAdjustment: function() {
+		
+		Engine.manaAdjustedLevel = Engine.manaLevel * Engine.attunementLevel + (Engine.attunementLevel - 1);
+		Engine.crystallizingAdjustedLevel = Engine.crystallizingLevel * Engine.attunementLevel;
+		Engine.cuttingAdjustedLevel = Engine.cuttingLevel * Engine.attunementLevel;
+		Engine.infusingAdjustedLevel = Engine.infusingLevel * Engine.attunementLevel;
+		Engine.creationAdjustedLevel = Engine.creationLevel * Engine.attunementLevel;
+		Engine.spellAdjustedLevel = Engine.spellLevel * Engine.attunementLevel;
 	},
 	
 	manaCalculations: function() {
@@ -220,10 +248,6 @@ var Engine = {
 	
 	LevelingCheck: function() {
 		
-		if(Engine.attunementLevel < 0) {
-			Engine.attunementLevel++;
-		}
-		
 		if(Engine.manaLevel < (Engine.manaExperience - Engine.manaLevel)) {
 			Engine.manaLevel++;
 			Engine.manaExperience = 0;
@@ -253,6 +277,17 @@ var Engine = {
 			Engine.spellLevel++;
 			Engine.spellExperience = 0;
 		}
+		
+		Engine.AttunementExperienceCheck();
+		
+		if(Engine.attunmentExperience == Engine.attunementExperienceCheck) {
+			Engine.attunementLevel++;
+			Engine.attunementExperienceCheck += Engine.attunementExperienceCheck;
+		}
+	},
+	
+	AttunementExperienceCheck: function() {
+		Engine.attunementExperience = Engine.manaLevel + Engine.crystallizingLevel + Engine.cuttingLevel + Engine.infusingLevel + Engine.creationLevel + Engine.spellLevel;
 	},
 	
 	// Contains all aspects of combat
