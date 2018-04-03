@@ -1,5 +1,66 @@
 var Engine = {
 	
+	// Basic Resources
+	mana: 0,
+	roughCrystals: 0,
+	cutCrystals: 0,
+	infusedCrystals: 0,
+	gold: 0,
+	roughStone: 0,
+	cutStone: 0,
+	
+	// Base Resource values
+	manaBase: 0,
+	crystallizingBase: 100,
+	cutCrystalBase: 0,
+	infusingBase: 0,
+	
+	// Concentrations
+	manaConcentration: 0,
+	cuttingConcentration: 0,
+	infusingConcentration: 0,
+	creationConcentration: 0,
+	castingConcentration: 0,
+	
+	// Rates and Chances
+	manaRate: 0,
+	manaConcentrationRate: 0,
+	crystallizationChance: 0,
+	cutRate: 0,
+	cuttingConcentrationRate: 0,
+	infusingRate: 0,
+	infusingConcentrationRate: 0,
+	creationRate: 0,
+	
+	// Player Statics
+	attunementLevel: 0,
+	manaLevel: 1,
+	crystallizingLevel: 1,
+	cuttingLevel: 1,
+	infusingLevel: 1,
+	creationLevel: 1,
+	spellLevel: 1,
+	
+	// Experience 
+	manaExperience: 0,
+	crystallizingExperience: 0,
+	cuttingExperience: 0,
+	infusingExperience: 0,
+	creationExperience: 0,
+	spellExperience: 0,	
+	
+	// Types
+	cuttingType: "Haphazardly",
+	infusionType: "Faintly",
+	
+	// Counters
+	manaCounter: 0,
+	crystallizationCounter: 0,
+	cuttingCounter: 0,
+	infusingCounter: 0,
+	creationCounter: 0,
+	castingCounter: 0,
+	
 	golemArmy: [],
 	
 	// Timing related Objects
@@ -27,7 +88,8 @@ var Engine = {
 			if(Engine.timeDeltaProduction >= Engine.cycleProduction) {
 				Engine.Production(Math.floor(Engine.timeDeltaProduction / Engine.cycleProduction));
 				Engine.timeDeltaProduction %= Engine.cycleProduction;
-			} else if(Engine.timeDeltaCombat >= Engine.cycleCombat) {
+			}
+			if(Engine.timeDeltaCombat >= Engine.cycleCombat) {
 				Engine.Combat(Math.floor(Engine.timeDeltaCombat / Engine.cycleCombat));
 				Engine.timeDeltaCombat %= Engine.cycleCombat;
 			}
@@ -39,6 +101,158 @@ var Engine = {
 	// Contains all aspects of production
 	Production: function(value) {
 		
+		Engine.SetCounters(0);
+		Engine.RateCalculations(value);
+		
+		if(Engine.manaRate > 0) {
+			Engine.manaCalculations();
+			Engine.crystalCalculations(value);
+		}
+		
+		if(Engine.cutRate > 0 && Engine.roughCrystals > 0) {
+			Engine.CutCrystals();
+		}
+		
+		if(Engine.infusingRate > 0 && Engine.cutCrystals > 0) {
+			Engine.InfuseCrystals();
+		}
+		
+		Engine.ConcentrationExperience();
+		
+		Engine.LevelingCheck();
+		
+		Engine.RateCalculations(Engine.cycleProduction/1000);
+	},
+	
+	RateCalculations: function(value) {
+		Engine.manaRate = (Engine.manaBase * Engine.attunementLevel + Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
+		Engine.manaConcentrationRate = Engine.manaConcentration * value;
+		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingLevel + Engine.attunementLevel;
+		Engine.cutRate = (Engine.cutCrystalBase * Engine.cuttingLevel + Engine.cuttingConcentration * Engine.cuttingLevel + Engine.attunementLevel) * value;
+		Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
+		Engine.infusingRate = (Engine.infusingBase * Engine.infusingLevel + Engine.infusingConcentration * Engine.infusingLevel + Engine.attunementLevel) * value;
+		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;
+	},
+	
+	manaCalculations: function() {
+		
+		Engine.mana += Engine.manaRate;
+		Engine.manaCounter += Engine.manaConcentrationRate;
+	},
+	
+	crystalCalculations: function(value) {
+		
+		var i = 0;
+		
+		while(i < value) {
+			
+			if((Math.random() * 100) <= Engine.crystallizationChance) {
+				
+				Engine.roughCrystals++;
+				
+				if(Engine.manaConcentration > 0) {
+					
+					Engine.crystallizationCounter++;
+				}
+			}
+			
+			i++;
+		}
+	},
+	
+	CutCrystals: function() {
+		
+		if(Engine.cutRate > Engine.roughCrystals) {
+			
+			Engine.cutCrystals += Engine.roughCrystals;
+			
+			if(Engine.cuttingConcentration > 0) {
+				Engine.cuttingCounter += Math.min(Engine.cuttingConcentrationRate, Engine.roughCrystals);
+			}
+			
+			Engine.roughCrystals = 0;
+			
+		} else {
+			
+			Engine.cutCrystals += Engine.cutRate;
+			Engine.roughCrystals -= Engine.cutRate;
+			Engine.cuttingCounter += Engine.cuttingConcentrationRate;
+		}
+	},
+	
+	InfuseCrystals: function() {
+		
+		if(Engine.infusingRate > Engine.cutCrystals) {
+			
+			Engine.infusedCrystals += Engine.cutCrystals;
+			
+			if(Engine.infusingConcentration > 0) {
+				Engine.infusingCounter += Math.min(Engine.infusingConcentrationRate, Engine.cutCrystals);
+			}
+			
+			Engine.cutCrystals = 0;
+				
+			} else {
+				
+				Engine.infusedCrystals += Engine.infusingRate;
+				Engine.cutCrystals -= Engine.infusingRate;
+				Engine.infusingCounter += Engine.infusingConcentrationRate;
+			}
+	},
+	
+	ConcentrationExperience() {
+		Engine.manaExperience += Engine.manaCounter;
+		Engine.crystallizingExperience += Engine.crystallizationCounter;
+		Engine.cuttingExperience += Engine.cuttingCounter;
+		Engine.infusingExperience += Engine.infusingCounter;
+		Engine.creationExperience += Engine.creationCounter;
+		Engine.spellExperience += Engine.castingCounter;
+	},
+	
+	SetCounters: function(value) {
+		Engine.manaCounter = value;
+		Engine.crystallizationCounter = value;
+		Engine.cuttingCounter = value;
+		Engine.infusingCounter = value;
+		Engine.creationCounter = value;
+		Engine.castingCounter = value;
+	},
+	
+	LevelingCheck: function() {
+		
+		if(Engine.attunementLevel < 0) {
+			Engine.attunementLevel++;
+		}
+		
+		if(Engine.manaLevel < (Engine.manaExperience - Engine.manaLevel)) {
+			Engine.manaLevel++;
+			Engine.manaExperience = 0;
+		}
+		
+		if(Engine.crystallizingLevel  < (Engine.crystallizingExperience - Engine.crystallizingLevel)) {
+			Engine.crystallizingLevel++;
+			Engine.crystallizingExperience = 0;
+		}
+		
+		if(Engine.cuttingLevel < (Engine.cuttingExperience - Engine.cuttingLevel)) {
+			Engine.cuttingLevel++;
+			Engine.cuttingExperience = 0;
+		}
+		
+		if(Engine.infusingLevel < (Engine.infusingExperience - Engine.infusingLevel)) {
+			Engine.infusingLevel++;
+			Engine.infusingExperience = 0;
+		}
+		
+		if(Engine.creationLvel < (Engine.creationExperience - Engine.creationLevel)) {
+			Engine.creationLevel++;
+			Engine.creationExperience = 0;
+		}		
+		
+		if(Engine.spellLevel < (Engine.spellExperience - Engine.spellLevel)) {
+			Engine.spellLevel++;
+			Engine.spellExperience = 0;
+		}
 	},
 	
 	// Contains all aspects of combat
@@ -49,6 +263,29 @@ var Engine = {
 	// Updates the display
 	Display: function() {
 		
+		// Basic Resources 
+		document.getElementById('mana').innerHTML = Engine.mana;
+		document.getElementById('roughCrystals').innerHTML = Engine.roughCrystals;
+		document.getElementById('cutCrystals').innerHTML = Engine.cutCrystals;
+		document.getElementById('infusedCrystals').innerHTML = Engine.infusedCrystals;
+		
+		// Rates and Chances
+		document.getElementById('manaRate').innerHTML = Engine.manaRate;
+		document.getElementById('cutRate').innerHTML = Engine.cutRate;
+		document.getElementById('infusingRate').innerHTML = Engine.infusingRate;
+		
+		// Player Levels
+		document.getElementById('attunementLevel').innerHTML = Engine.attunementLevel;
+		document.getElementById('manaLevel').innerHTML = Engine.manaLevel;
+		document.getElementById('crystallizingLevel').innerHTML = Engine.crystallizingLevel;
+		document.getElementById('cuttingLevel').innerHTML = Engine.cuttingLevel;
+		document.getElementById('infusingLevel').innerHTML = Engine.infusingLevel;
+		document.getElementById('creationLevel').innerHTML = Engine.creationLevel;
+		document.getElementById('spellLevel').innerHTML = Engine.spellLevel;
+		
+		// Types
+		document.getElementById('cuttingType').innerHTML = Engine.cuttingType;
+		document.getElementById('infusionType').innerHTML = Engine.infusionType;
 	},
 	
 	// Contains all of the information to be saved
@@ -116,229 +353,72 @@ var Engine = {
 			console.log("Save file deleted successfully.");
 			
 		}
-	}
-	
-	GolemCreation: function() {
-		// [Type, HP, Damage, Armor, Speed, Mana Cost, Type of focus, Focus Gems, Material Cost]
-		var golemCombined = [];
-		
-		golemCombined.push(
-			(golemSelectedInfusion + " " + magicSchool + " Golem of " + golemSelectedMaterial),
-			(golemSelectedInfusionHp + golemSelectedMaterialHp),
-			(golemSelectedInfusionDamage + golemSelectedMaterialDamage),
-			(golemSelectedInfusionArmor + golemSelectedMaterialArmor),
-			(golemSelectedInfusionSpeed + golemSelectedMaterialSpeed),
-			golemSelectedInfusionMana,
-			golemSelectedInfusionFocusGems,
-			golemSelectedMaterialCost);
-
-		Engine.golemArmy.push(golemCombined[0]);
 	},
 	
+	//GolemCreation: function() {
+	//	// [Type, HP, Damage, Armor, Speed, Mana Cost, Type of focus, Focus Gems, Material Cost]
+	//	var golemCombined = [];
+	//	
+	//	golemCombined.push(
+	//		(golemSelectedInfusion + " " + magicSchool + " Golem of " + golemSelectedMaterial),
+	//		(golemSelectedInfusionHp + golemSelectedMaterialHp),
+	//		(golemSelectedInfusionDamage + golemSelectedMaterialDamage),
+	//		(golemSelectedInfusionArmor + golemSelectedMaterialArmor),
+	//		(golemSelectedInfusionSpeed + golemSelectedMaterialSpeed),
+	//		golemSelectedInfusionMana,
+	//		golemSelectedInfusionFocusGems,
+	//		golemSelectedMaterialCost);
+    //
+	//	Engine.golemArmy.push(golemCombined[0]);
+	//},
+	
 	Concentration: function(value) {
+		
+		Engine.ResetConcentration();
+		
 		switch(value) {
 			default:
 				console.log('Error in Concentration function');
 				break;
-			case value = "Mana":
-				document.getElementByClass('buttonConcentration').style.background: null;
-				document.getElementById('buttonMana').style.background: #e7e7e7;
+			case value = "mana":
+				document.getElementById('manaButton').style.backgroundColor = "#737373";
+				Engine.manaConcentration = 1;
 				break;
-			case value = "Gems":
-				document.getElementByClass('buttonConcentration').style.background: null;
-				document.getElementById('buttonCutFocusGems').style.background: #e7e7e7;
+			case value = "cutting":
+				document.getElementById('cuttingButton').style.backgroundColor = "#737373";
+				Engine.cuttingConcentration = 1;
+				break;
+			case value = "infusing":
+				document.getElementById('infusingButton').style.backgroundColor = "#737373";
+				Engine.infusingConcentration = 1;
+				break;
+			case value = "creation":
+				document.getElementById('creationButton').style.backgroundColor = "#737373";
+				Engine.creationConcentration = 1;
+				break;
+			case value = "casting":
+				document.getElementById('castingButton').style.backgroundColor = "#737373";
+				Engine.castingConcentration = 1;
 		}		
-	}	
+	},
+
+	ResetConcentration: function() {
+	
+		var l = document.getElementsByClassName('buttonConcentration').length;
+		var i = 0;
+		
+		while(i < l) {
+			
+			document.getElementsByClassName('buttonConcentration')[i].style.backgroundColor = "#cccccc";
+			i++;
+		}
+		
+		Engine.manaConcentration = 0;
+		Engine.cuttingConcentration = 0;
+		Engine.infusingConcentration = 0;
+		Engine.creationConcentration = 0;
+		Engine.castingConcentration = 0;
+	}
 };
 
 window.onload = Engine.Init();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//Variable creation
-	var magicSchool = 'Arcane';
-	var mana = 1000;
-	var gold = 1000;
-	var stone = 1000;
-	var chiselledStone = 1000;
-
-	//Focus gem variables
-	var focusGems = 1000;
-	var focusGemsBaseChance = 1300;
-	var focusGemsChance = focusGemsBaseChance;
-
-	// Golem variables
-	// golem army
-	var golemArmy = [];
-	// Material variables
-	// Rocks and dirt material stats [Type, HP, Damage, Armor, Speed]
-	var materialDirt = ['Rocks and Dirt', 1, 0, 0, 0];
-	// Rough Stone material stats [Type, HP, Damage, Armor, Speed, Cost]
-	var materialStone = ['Rough Stone', 10, 2, 1, 0, 1];
-	// Chiselled Stone material stats [Type, HP, Damage, Armor, Speed, Cost]
-	var materialChiselled = ['Chiselled Stone', 12, 5, 4, 0, 1];
-
-	// Infusion variables
-	// Poorly Infused infusion stats [Type, HP, Damage, Armor, Speed, Mana Cost, Focus Gems]
-	var infusionPoorly = ['Poorly Infused', 1, 1, 0, 0, 1, 1];
-	// Weakly Infused infustion stats [Type, HP, Damage, Armor, Speed, Mana Cost, Focus Gems]
-	var infusionWeakly = ['Weakly Infused', 4, 1, 0, 0, 10, 1];
-	// Infused infusion stats [Type, HP, Damage, Armor, Speed, Mana Cost, Focus Gems]
-	var infusionInfused = ['Infused', 20, 5, 0, 0, 100, 1];
-
-	// Demon variables
-	// Current demon based on zone
-	var maxZone = 0;
-	var currentZone = 0;
-
-	// Basic demons
-	// Imp stats [Type, HP, Damage, Armor, Speed, Bounty]
-	var demonImp = ['Imp', 1, 1, 0, 0, 1];
-
-
-
-
-// Selects the correct material for golem construction
-SelectGolemMaterial: function(value) {
-	switch(value){
-		default:
-			console.log('Error in SelectGolemMaterial function');
-			break;
-		case value = materialDirt[0]:
-			golemSelectedMaterial = materialDirt[0];
-			golemSelectedMaterialHp = materialDirt[1];
-			golemSelectedMaterialDamage = materialDirt[2];
-			golemSelectedMaterialArmor = materialDirt[3];
-			golemSelectedMaterialSpeed = materialDirt[4];
-			golemSelectedMaterialCost = 0;
-			break;
-		case value = materialStone[0]:
-			golemSelectedMaterial = materialStone[0];
-			golemSelectedMaterialCost = materialStone[5];
-			golemSelectedMaterialAmount = stone;
-			golemSelectedMaterialHp = materialStone[1];
-			golemSelectedMaterialDamage = materialStone[2];
-			golemSelectedMaterialArmor = materialStone[3];
-			golemSelectedMaterialSpeed = materialStone[4];
-			break;
-		case value = materialChiselled[0]:
-			golemSelectedMaterial = materialChiselled[0];
-			golemSelectedMaterialCost = materialChiselled[5];
-			golemSelectedMaterialAmount = chiselledStone;
-			golemSelectedMaterialHp = materialChiselled[1];
-			golemSelectedMaterialDamage = materialChiselled[2];
-			golemSelectedMaterialArmor = materialChiselled[3];
-			golemSelectedMaterialSpeed = materialChiselled[4];
-			
-	}
-	golemCombinationCreation();
-}
-
-function SelectGolemInfusion(value){
-	switch(value){
-		default:
-			console.log('Error in SelectGolemInfusion function');
-			break;
-		case value = infusionPoorly[0]:
-			golemSelectedInfusion = infusionPoorly[0];
-			golemSelectedInfusionMana = infusionPoorly[5];
-			golemSelectedInfusionFocusGems = infusionPoorly[6];
-			golemSelectedInfusionHp = infusionPoorly[1];
-			golemSelectedInfusionDamage = infusionPoorly[2];
-			golemSelectedInfusionArmor = infusionPoorly[3];
-			golemSelectedInfusionSpeed = infusionPoorly[4];
-			break;
-		case value = infusionWeakly[0]:
-			golemSelectedInfusion = infusionWeakly[0];
-			golemSelectedInfusionMana = infusionWeakly[5];
-			golemSelectedInfusionFocusGems = infusionWeakly[6];
-			golemSelectedInfusionHp = infusionWeakly[1];
-			golemSelectedInfusionDamage = infusionWeakly[2];
-			golemSelectedInfusionArmor = infusionWeakly[3];
-			golemSelectedInfusionSpeed = infusionWeakly[4];
-			break;
-		case value = infusionInfused[0]:
-			golemSelectedInfusion = infusionInfused[0];
-			golemSelectedInfusionMana = infusionInfused[5];
-			golemSelectedInfusionFocusGems = infusionInfused[6];
-			golemSelectedInfusionHp = infusionInfused[1];
-			golemSelectedInfusionDamage = infusionInfused[2];
-			golemSelectedInfusionArmor = infusionInfused[3];
-			golemSelectedInfusionSpeed = infusionInfused[4];
-	}
-	golemCombinationCreation();
-}
-
-function createGolemCombination(){
-	if(mana >= golemCombinedCostInfusion && golemSelectedMaterialAmount >= golemCombinedCostMaterial && focusGems >= golemSelectedInfusionFocusGems){
-		golems.push(golemCombination);
-	}
-	console.log(golems);
-}
-// Checks zone and adjusted demon you will be fighting
-function demon_zone_check(){
-	switch(){
-		default:
-			console.log('Error in demon_zone_check function');
-			break;
-		case currentZone >= 1 && currentZone%10 > 0:
-			demonCurrentType = demonTypeImp;
-			currentBounty = demonImpBounty;
-			demonCurrentHp = demonImpHp;
-			demonCurrentDamage = demonImpDamage;
-			demonCurrentArmor = demonImpArmor;
-			demonCurrentSpeed = demonImpSpeed;
-			break;
-		case currentZone % 10 === 0:
-			demonCurrentType = demonTypeLesserImp;
-			currentBounty = demonLesserImpBounty;
-			demonCurrentHp = demonLesserImpHp;
-			demonCurrentDamage = demonLesserImpDamage;
-			demonCurrentArmor = demonLesserImpArmor;
-			demonCurrentSpeed = demonLesserImpSpeed;
-	}
-	document.getElementById("demon_current_zone") = currentZone;
-	document.getElementById("demon_current_type") = demonCurrentType;
-	document.getElementById("demon_current_bounty") = currentBounty;
-	document.getElementById("demon_current_stats_hp") = demonCurrentHp;
-	document.getElementById("demon_current_stats_damage") = demonCurrentDamage;
-	document.getElementById("demon_current_stats_armor") = demonCurrentArmor;
-	document.getElementById("demon_current_stats_speed") = demonCurrentSpeed;
-}

@@ -8,13 +8,37 @@
 	
 	<body>
 		<!--Arcane School here-->
-		<p>School of <span id="magical_school">Arcane</span></p>
+		<p>School of <span id="magicalSchool">Arcane</span></p>
 		
-		<button class="buttonConcentration" id="buttonMana" onclick="Concentration("Mana")">Generate Mana</button>
-		<button class="buttonConcentration" id="buttonCutFocusGems" onclick="Concentration("Gems")">Cut Focus Gems</button>
+		<button class="buttonConcentration" id="manaButton" onclick="Engine.Concentration('mana')">Generate Mana</button>
+		<button class="buttonConcentration" id="cuttingButton" onclick="Engine.Concentration('cutting')">Cutting Rough Mana Crystals </button>
+		<button class="buttonConcentration" id="infusingButton" onclick="Engine.Concentration('infusing')">Infusing Cut Mana Crystals</button>
+		<button class="buttonConcentration" id="creationButton" onclick="Engine.Concentration('creation')">Golem Creation</button>
+		<button class="buttonConcentration" id="castingButton" onclick="Engine.Concentration('casting')">Spell Casting</button>
+	
+		</br>
 		
+		<div class="resources">
+			<div class="manaCrystalRecources">
+				<p>Mana: <span id="mana">0</span>   <span class="delta" id="manaRate">0</span> Mana/sec</p>
+				<p>Rough Mana Crystals: <span id="roughCrystals">0</span>   <span class="delta" id="crystalRate">0</span> Mana Crystallizations/sec</p>
+				<p><span class="playerStat" id="cuttingType">Haphazardly</span> Cut Mana Crystals: <span id="cutCrystals">0</span>   <span class="delta" id="cutRate">0</span> Cut Crystals/sec</p>
+				<p><span class="playerStat" id="infusionType">Faintly</span> Infused Mana Crystals: <span id="infusedCrystals">0</span>   <span class="delta" id="infusingRate">0</span> Infused Crystals/sec</p>
+			</div>
+		</div>
 		
+		</br>
 		
+		<div class="playerLevels">
+			<p>Levels</p>
+			<p>Attunement: <span id="attunementLevel">0</span></p>
+			<p>Mana Generate: <span id="manaLevel">1</span></p>
+			<p>Crystallization: <span id="crystallizingLevel">1</span></p>
+			<p>Crystal Cutting: <span id="cuttingLevel">1</span></p>
+			<p>Crystal Infusion: <span id="infusingLevel">1</span></p>
+			<p>Creation: <span id="creationLevel">1</span></p>
+			<p>Spell: <span id="spellLevel">1</span></p>
+		</div>
 		<script type="text/javascript" src="main.js"></script>
 	</body>
 </html>
