@@ -125,37 +125,40 @@ var Engine = {
 	},
 	
 	RateCalculations: function(value) {
-		Engine.manaRate = (Engine.manaBase * Engine.attunementLevel + Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
-		Engine.manaConcentrationRate = Engine.manaConcentration * value;
+		Engine.manaConcentrationRate = (Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
+    Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
+		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;    
+    Engine.manaRate = (Engine.manaBase * Engine.attunementLevel + Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
 		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingLevel + Engine.attunementLevel;
 		Engine.cutRate = (Engine.cutCrystalBase * Engine.cuttingLevel + Engine.cuttingConcentration * Engine.cuttingLevel + Engine.attunementLevel) * value;
-		Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
-		Engine.infusingRate = (Engine.infusingBase * Engine.infusingLevel + Engine.infusingConcentration * Engine.infusingLevel + Engine.attunementLevel) * value;
-		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;
+    Engine.infusingRate = (Engine.infusingBase * Engine.infusingLevel + Engine.infusingConcentration * Engine.infusingLevel + Engine.attunementLevel) * value;
+		
 	},
 	
 	ManaCalculations: function() {
 		
 		Engine.mana += Engine.manaRate;
-		Engine.manaCounter += Engine.manaConcentrationRate;
+    
+    if(Engine.manaConcentration > 0) {
+			Engine.manaExperience += Engine.manaConcentrationRate;
+      }
 	},
 	
 	CrystalCalculations: function(value) {
 		
 		var i = 0;
-    var tempCrystallizations = Engine.crystallizationChance / 100;
+    var tempCrystallizations = Math.floor(Engine.crystallizationChance / 100);
 		var tempCrystallizationChance = Engine.crystallizationChance % 100;
     
     Engine.roughCrystals += tempCrystallizations;
     
     if(Engine.manaConcentration > 0) {
-					
 					Engine.crystallizationCounter += tempCrystallizations;
 		}
     
 		while(i < value) {
 			
-			if(Math.floor(Math.random() * 100) < tempCrystallizationChance) {
+			if(Math.floor(Math.random() * 101) < tempCrystallizationChance) {
 				
 				Engine.roughCrystals++;
 				
@@ -195,7 +198,7 @@ var Engine = {
 	},
 	
 	ConcentrationExperience() {
-		Engine.manaExperience += Engine.manaCounter;
+		 += Engine.manaCounter;
 		Engine.crystallizingExperience += Engine.crystallizationCounter;
 		Engine.cuttingExperience += Engine.cuttingCounter;
 		Engine.infusingExperience += Engine.infusingCounter;
