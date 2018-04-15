@@ -7,6 +7,9 @@
 	</head>
 	
 	<body>
+		<button id="Save" onclick="Engine.Save()">Save</button>
+		<button id="Load" onclick="Engine.Load()">Load</button>
+		</br>
 		<!--Arcane School here-->
 		<p>School of <span id="magicalSchool">Arcane</span></p>
 		
@@ -22,7 +25,7 @@
 			<div class="manaCrystalRecources">
 				<p>Mana: <span id="mana">0</span>   <span class="delta" id="manaRate">0</span> Mana/sec</p>
 				<p>Rough Mana Crystals: <span id="roughCrystals">0</span>   <span class="delta" id="crystalRate">0</span> Mana Crystallizations/sec</p>
-				<p><span class="playerStat" id="cuttingType">Haphazardly</span> Cut Mana Crystals: <span id="cutCrystals">0</span>   <span class="delta" id="cutRate">0</span> Cut Crystals/sec</p>
+				<p><span class="playerStat" id="cuttingType">Haphazardly</span> Cut Mana Crystals: <span id="cutCrystals">0</span>   <span class="delta" id="cuttingRate">0</span> Cut Crystals/sec</p>
 				<p><span class="playerStat" id="infusionType">Faintly</span> Infused Mana Crystals: <span id="infusedCrystals">0</span>   <span class="delta" id="infusingRate">0</span> Infused Crystals/sec</p>
 			</div>
 		</div>
