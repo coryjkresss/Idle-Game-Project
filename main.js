@@ -71,16 +71,18 @@ var Engine = {
 	
 	// Types
 	cuttingType: "Broken",
-	infusingType: "Faintly",	
+	infusingType: "Weakly",	
 	
 	golemArmy: [],
 	
 	// Timing related Objects
 	timeThen: Date.now(),
 	timeDeltaProduction: 0,
-	timeDeltaCombat: 0,
+	timeDeltaSpellsCombat: 0,
+	timeDeltaGolemsCombat: 0,
 	cycleProduction: 1000,
-	cycleCombat: 500,
+	cycleSpellsCombat: 5000,
+	cycleGolemsCombat: 10000,
 	
 	// Delta's of resource production
 	manaDelta: 0,
@@ -110,20 +112,26 @@ var Engine = {
 		var timeNow = Date.now();
 		
 		Engine.timeDeltaProduction += timeNow - Engine.timeThen;
-		Engine.timeDeltaCombat += timeNow - Engine.timeThen;
+		Engine.timeDeltaSpellsCombat += timeNow - Engine.timeThen;
+		Engine.timeDeltaGolemsCombat += timeNow - Engine.timeThen;
 		Engine.timeThen = timeNow;
 		
-		if(Engine.timeDeltaProduction >= Engine.cycleProduction || Engine.timeDeltaCombat >= Engine.cycleCombat) {
+		if(Engine.timeDeltaProduction >= Engine.cycleProduction || Engine.timeDeltaSpellsCombat >= Engine.cycleSpellsCombat || Engine.timeDeltaGolemsCombat >= Engine.cycleGolemsCombat) {
 			if(Engine.timeDeltaProduction >= Engine.cycleProduction) {
 				Engine.Production(Math.floor(Engine.timeDeltaProduction / Engine.cycleProduction));
 				Engine.timeDeltaProduction %= Engine.cycleProduction;
 			}
-			if(Engine.timeDeltaCombat >= Engine.cycleCombat) {
-				Engine.Combat(Math.floor(Engine.timeDeltaCombat / Engine.cycleCombat));
-				Engine.timeDeltaCombat %= Engine.cycleCombat;
+			if(Engine.timeDeltaSpellsCombat >= Engine.cycleSpellsCombat) {
+				Engine.SpellsCombat(Math.floor(Engine.timeDeltaSpellsCombat / Engine.cycleSpellsCombat));
+				Engine.timeDeltaSpellsCombat %= Engine.cycleSpellsCombat;
+			}
+			if(Engine.timeDeltaGolemsCombat >= Engine.cycleGolemsCombat) {
+				Engine.GolemsCombat(Math.floor(Engine.timeDeltaGolemsCombat / Engine.cycleGolemsCombat));
+				Engine.timeDeltaGolemsCombat %= Engine.cycleGolemsCombat;
 			}
 			Engine.Display();
 		}
+
 		window.requestAnimationFrame(Engine.Clock);
 	},
 	
@@ -259,7 +267,7 @@ var Engine = {
 			Engine.cuttingType = "Brilliantly";
 		} else if(Engine.CuttingLevel > 90) {
 			Engine.cuttingMax = 90;
-			Engine.cuttingType = "Astonishingly Brilliantly";
+			Engine.cuttingType = "Astonishingly";
 		} else if(Engine.cuttingLevel > 100) {
 			Engine.cuttingMax = 100;
 			Engine.cuttingType = "Scintillating";
@@ -275,22 +283,22 @@ var Engine = {
 			Engine.infusingType = "Faintly";
 		} else if(Engine.infusingLevel > 20) {
 			Engine.infusingCap = 0.2;
-			Engine.infusingType = "Weakly";
+			Engine.infusingType = "Barely"
 		} else if(Engine.infusingLevel > 30) {
 			Engine.infusingCap = 0.3;
-			Engine.infusingType = "Infused"
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.3";
 		} else if(Engine.infusingLevel > 40) {
 			Engine.infusingCap = 0.4;
-			Engine.infusingType = "Precisely"
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.4";
 		} else if(Engine.infusingLevel > 50) {
 			Engine.infusingCap = 0.5;
-			Engine.infusingType = "Strongly";
+			Engine.infusingType = "Infused";
 		} else if(Engine.infusingLevel > 60) {
 			Engine.infusingCap = 0.6;
-			Engine.infusingType = "Elementally";
+			Engine.infusingType = "Precisely";
 		} else if(Engine.infusingLevel > 70) {
 			Engine.infusingCap = 0.7;
-			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.7";
+			Engine.infusingType = "Strongly";
 		} else if(Engine.infusingLevel > 80) {
 			Engine.infusingCap = 0.8;
 			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.8";
@@ -409,9 +417,13 @@ var Engine = {
 		Engine.creationConcentration = 0;
 		Engine.castingConcentration = 0;
 	},
+	// All objects will need to be declared in this function.
+	SpellsCombat: function(value) {
+		if(Engine.castingConcentration)
+	},
 	
 	// Contains all aspects of combat
-	Combat: function(value) {
+	GolemsCombat: function(value) {
 		
 	},
 	
@@ -443,10 +455,10 @@ var Engine = {
 		document.getElementById('infusingType').innerHTML = Engine.infusingType;
 	},
 	
-	//// Contains all of the information to be saved
-	//playerData: {
-	//	
-	//},
+	// Contains all of the information to be saved
+	playerData: {
+		
+	},
 	
 	// Saves the current game by converting the playerData object into a string and storing the string in localStorage
 	Save: function() {
