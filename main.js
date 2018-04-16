@@ -1,5 +1,9 @@
 var Engine = {
 	
+	// Notes to self
+	// 4/3/18 - get save function up and running
+	// 4/4/18 - on to spells!
+	
 	// Basic Resources
 	mana: 0,
 	roughCrystals: 0,
@@ -26,14 +30,14 @@ var Engine = {
 	manaRate: 0,
 	manaConcentrationRate: 0,
 	crystallizationChance: 0,
-	cutRate: 0,
+	cuttingRate: 0,
 	cuttingConcentrationRate: 0,
 	infusingRate: 0,
 	infusingConcentrationRate: 0,
 	creationRate: 0,
 	
 	// Player Statics
-	attunementLevel: 0,
+	attunementLevel: 1,
 	manaLevel: 1,
 	crystallizingLevel: 1,
 	cuttingLevel: 1,
@@ -41,7 +45,16 @@ var Engine = {
 	creationLevel: 1,
 	spellLevel: 1,
 	
+	// Player Adjusted Levels
+	manaAdjustedLevel: 0,
+	crystallizingAdjustedLevel: 0,
+	cuttingAdjustedLevel: 0,
+	infusingAdjustedLevel: 0,
+	creationAdjustedLevel: 0,
+	spellAdjustedLevel: 0,
+	
 	// Experience 
+	attunementExperience: 0,
 	manaExperience: 0,
 	crystallizingExperience: 0,
 	cuttingExperience: 0,
@@ -49,17 +62,16 @@ var Engine = {
 	creationExperience: 0,
 	spellExperience: 0,	
 	
-	// Types
-	cuttingType: "Haphazardly",
-	infusionType: "Faintly",
+	// Level Gates
+	attunmentLevelGate: 100,
 	
-	// Counters
-	manaCounter: 0,
-	crystallizationCounter: 0,
-	cuttingCounter: 0,
-	infusingCounter: 0,
-	creationCounter: 0,
-	castingCounter: 0,
+	// Cut Crystal Max mana
+	cuttingMax: 10,
+	infusingCap: 0.1,
+	
+	// Types
+	cuttingType: "Broken",
+	infusingType: "Faintly",	
 	
 	golemArmy: [],
 	
@@ -70,9 +82,26 @@ var Engine = {
 	cycleProduction: 1000,
 	cycleCombat: 500,
 	
-	// 
+	// Delta's of resource production
+	manaDelta: 0,
+	crystallizationDelta: 0,
+	cuttingDelta: 0,
+	infusingDelta: 0,
+	creationDelta: 0,
+	castingDelta: 0,
+	
+	// Previous Cycle numbers
+	manaInitial: 0,
+	crystallizationInitial: 0,
+	cuttingInitial: 0,
+	infusingInitial: 0,
+	creationInitial: 0,
+	castingInitial: 0,
+	
+
 	Init: function() {
 		Engine.Load();
+		Engine.Display();
 		Engine.Clock();
 	},
     
@@ -101,70 +130,92 @@ var Engine = {
 	// Contains all aspects of production
 	Production: function(value) {
 		
-		Engine.SetCounters(0);
 		Engine.RateCalculations(value);
 		
 		if(Engine.manaRate > 0) {
-			Engine.ManaCalculations();
-			Engine.CrystalCalculations(value);
+			Engine.manaCalculations();
+			Engine.crystalCalculations(value);
 		}
 		
-		if(Engine.cutRate > 0 && Engine.roughCrystals > 0) {
+		if(Engine.cuttingRate > 0 && Engine.roughCrystals > 0) {
 			Engine.CutCrystals();
 		}
 		
 		if(Engine.infusingRate > 0 && Engine.cutCrystals > 0 && Engine.mana >= Engine.cuttingMax) {
-			Engine.InfuseCrystals();
+			Engine.InfusingCrystals();
 		}
 		
 		Engine.ConcentrationExperience();
 		
 		Engine.LevelingCheck();
 		
-		Engine.RateCalculations(Engine.cycleProduction/1000);
+		Engine.ResourceDeltaCalculations();
+	},
+	
+	ResourceDeltaCalculations: function() {
+		Engine.manaDelta = Engine.mana - Engine.manaInitial;
+		Engine.crystallizationDelta = Engine.crystallization - Engine.crystallizationInitial;
+		Engine.cuttingDelta = Engine.cutCrystals - Engine.cuttingInitial;
+		Engine.infusingDelta = Engine.infusedCrystals - Engine.infusingInitial;
+		Engine.creationDelta = Engine.golemArmy.length - Engine.creationInitial;
+		Engine.castingDelta = Engine.castingCount - Engine.castingInitial;
+		
+		Engine.manaInitial = Engine.mana;
+		Engine.crystallizationInitial = Engine.crystallization;
+		Engine.cuttingInitial = Engine.cutCrystals;
+		Engine.infusingInitial = Engine.infusedCrystals;
+		Engine.creationInitial = Engine.golemArmy.length;
+		Engine.castingInitial = Engine.castingCount;		
 	},
 	
 	RateCalculations: function(value) {
-		Engine.manaConcentrationRate = (Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
-    Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
-		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;    
-    Engine.manaRate = (Engine.manaBase * Engine.attunementLevel + Engine.manaConcentration * Engine.manaLevel + Engine.attunementLevel) * value;
-		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingLevel + Engine.attunementLevel;
-		Engine.cutRate = (Engine.cutCrystalBase * Engine.cuttingLevel + Engine.cuttingConcentration * Engine.cuttingLevel + Engine.attunementLevel) * value;
-    Engine.infusingRate = (Engine.infusingBase * Engine.infusingLevel + Engine.infusingConcentration * Engine.infusingLevel + Engine.attunementLevel) * value;
 		
+		Engine.AttunementLevelAdjustment();
+		
+		Engine.manaRate = (Engine.manaBase * Engine.manaAdjustedLevel + Engine.manaConcentration * Engine.manaAdjustedLevel) * value;
+		Engine.manaConcentrationRate = Engine.manaConcentration * value;
+		// optimize this formula 
+		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingAdjustedLevel;
+		Engine.cuttingRate = (Engine.cutCrystalBase * Engine.cuttingAdjustedLevel + Engine.cuttingConcentration * Engine.cuttingAdjustedLevel) * value;
+		Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
+		Engine.infusingRate = (Engine.infusingBase * Engine.infusingAdjustedLevel + Engine.infusingConcentration * Engine.infusingAdjustedLevel) * value;
+		Engine.infusingConcentrationRate = Engine.infusingConcentration * value;
 	},
 	
-	ManaCalculations: function() {
+	AttunementLevelAdjustment: function() {
+		
+		Engine.manaAdjustedLevel = Engine.manaLevel * Engine.attunementLevel + (Engine.attunementLevel - 1);
+		Engine.crystallizingAdjustedLevel = Engine.crystallizingLevel * Engine.attunementLevel;
+		Engine.cuttingAdjustedLevel = Engine.cuttingLevel * Engine.attunementLevel;
+		Engine.infusingAdjustedLevel = Engine.infusingLevel * Engine.attunementLevel;
+		Engine.creationAdjustedLevel = Engine.creationLevel * Engine.attunementLevel;
+		Engine.spellAdjustedLevel = Engine.spellLevel * Engine.attunementLevel;
+	},
+	
+	manaCalculations: function() {
 		
 		Engine.mana += Engine.manaRate;
-    
-    if(Engine.manaConcentration > 0) {
-			Engine.manaExperience += Engine.manaConcentrationRate;
-      }
+		Engine.manaExperience += Engine.manaConcentrationRate;
 	},
-	
+
 	CrystalCalculations: function(value) {
 		
 		var i = 0;
-    var tempCrystallizations = Math.floor(Engine.crystallizationChance / 100);
+		var tempCrystallizations = Math.floor(Engine.crystallizationChance / 100);
 		var tempCrystallizationChance = Engine.crystallizationChance % 100;
     
-    Engine.roughCrystals += tempCrystallizations;
+		Engine.roughCrystals += tempCrystallizations * value;
     
-    if(Engine.manaConcentration > 0) {
-					Engine.crystallizationCounter += tempCrystallizations;
+		if(Engine.manaConcentration > 0) {
+			Engine.crystallizingExperience += tempCrystallizations * value;
 		}
     
 		while(i < value) {
-			
-			if(Math.floor(Math.random() * 101) < tempCrystallizationChance) {
-				
+			if(Math.floor(Math.random() * 100) < tempCrystallizationChance) {
 				Engine.roughCrystals++;
 				
 				if(Engine.manaConcentration > 0) {
-					
-					Engine.crystallizationCounter++;
+					Engine.crystallizingExperience++;
 				}
 			}
 			
@@ -173,53 +224,99 @@ var Engine = {
 	},
 	
 	CutCrystals: function() {
-		
 		var tempCuttingCount = Math.Min(Engine.cuttingRate, Engine.roughCrystals);
     
-			Engine.cutCrystals += tempCuttingCount;
-			Engine.roughCrystals -= tempCuttingCount;
-      
-      if(Engine.cuttingConcentrataion > 0) {
-      	Engine.cuttingCounter += Math.Min(Engine.cuttingConcentrationRate, tempCuttingCount);
-      }
+		Engine.cutCrystals += tempCuttingCount;
+		Engine.roughCrystals -= tempCuttingCount;
+		Engine.cuttingExperience += Math.Min(Engine.cuttingConcentrationRate, tempCuttingCount);
+		
+	},
+	
+	CuttingCrystalTypeCheck: function() {
+		if(Engine.cuttingLevel > 10) {
+			Engine.cuttingMax = 10;
+			Engine.cuttingType = "Haphazardly";
+		} else if(Engine.cuttingLevel > 20) {
+			Engine.cuttingMax = 20;
+			Engine.cuttingType = "Poorly";
+		} else if(Engine.cuttingLevel > 30) {
+			Engine.cuttingMax = 30;
+			Engine.cuttingType = "Asymmetrically"
+		} else if(Engine.cuttingLevel > 40) {
+			Engine.cuttingMax = 40;
+			Engine.cuttingType = "Symmetrically"
+		} else if(Engine.cuttingLevel > 50) {
+			Engine.cuttingMax = 50;
+			Engine.cuttingType = "Expertly";
+		} else if(Engine.cuttingLevel > 60) {
+			Engine.cuttingMax = 60;
+			Engine.cuttingType = "Beautifully";
+		} else if(Engine.cuttingLevel > 70) {
+			Engine.cuttingMax = 70;
+			Engine.cuttingType = "Dazzlingly";
+		} else if(Engine.cuttingLevel > 80) {
+			Engine.cuttingMax = 80;
+			Engine.cuttingType = "Brilliantly";
+		} else if(Engine.CuttingLevel > 90) {
+			Engine.cuttingMax = 90;
+			Engine.cuttingType = "Astonishingly Brilliantly";
+		} else if(Engine.cuttingLevel > 100) {
+			Engine.cuttingMax = 100;
+			Engine.cuttingType = "Scintillating";
+		} else if(Engine.cuttingLevel > 110) {
+			Engine.cuttingMax = 200;
+			Engine.cuttingType = "Iridescent";
+		}
+	},
+	
+	InfusingCrystalTypeCheck: function() {
+		if(Engine.infusingLevel > 10) {
+			Engine.infusingCap = 0.1;
+			Engine.infusingType = "Faintly";
+		} else if(Engine.infusingLevel > 20) {
+			Engine.infusingCap = 0.2;
+			Engine.infusingType = "Weakly";
+		} else if(Engine.infusingLevel > 30) {
+			Engine.infusingCap = 0.3;
+			Engine.infusingType = "Infused"
+		} else if(Engine.infusingLevel > 40) {
+			Engine.infusingCap = 0.4;
+			Engine.infusingType = "Precisely"
+		} else if(Engine.infusingLevel > 50) {
+			Engine.infusingCap = 0.5;
+			Engine.infusingType = "Strongly";
+		} else if(Engine.infusingLevel > 60) {
+			Engine.infusingCap = 0.6;
+			Engine.infusingType = "Elementally";
+		} else if(Engine.infusingLevel > 70) {
+			Engine.infusingCap = 0.7;
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.7";
+		} else if(Engine.infusingLevel > 80) {
+			Engine.infusingCap = 0.8;
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.8";
+		} else if(Engine.infusingLevel > 90) {
+			Engine.infusingCap = 0.9;
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.9";
+		} else if(Engine.infusingLevel > 100) {
+			Engine.infusingCap = 1;
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_1";
+		} else if(Engine.infusingLevel > 110) {
+			Engine.infusingCap = 2;
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_2";
+		}
 	},
 	
 	InfuseCrystals: function() {
    
-    var tempInfusingCount = Math.Min(Engine.infusingRate, Engine.cutCrystals, (Engine.mana/Engine.cuttingMax));
-    
-    Engine.mana -= tempInfusingCount * Engine.cuttingMax;
-    Engine.cutCrystals -= tempInfusingCount;
-    Engine.infusedCrystals += tempInfusingCount;
-    
-    if(Engine.infusingConcentration > 0) {
-    	Engine.infusingCounter += Math.Min(Engine.infusingConcentrationRate, tempInfusingCount); 
-    }
-	},
-	
-	ConcentrationExperience() {
-		 += Engine.manaCounter;
-		Engine.crystallizingExperience += Engine.crystallizationCounter;
-		Engine.cuttingExperience += Engine.cuttingCounter;
-		Engine.infusingExperience += Engine.infusingCounter;
-		Engine.creationExperience += Engine.creationCounter;
-		Engine.spellExperience += Engine.castingCounter;
-	},
-	
-	SetCounters: function(value) {
-		Engine.manaCounter = value;
-		Engine.crystallizationCounter = value;
-		Engine.cuttingCounter = value;
-		Engine.infusingCounter = value;
-		Engine.creationCounter = value;
-		Engine.castingCounter = value;
+		var tempInfusingCount = Math.Min(Engine.infusingRate, Engine.cutCrystals, (Engine.mana/Engine.cuttingMax));
+		
+		Engine.mana -= tempInfusingCount * Engine.cuttingMax;
+		Engine.cutCrystals -= tempInfusingCount;
+		Engine.infusedCrystals += tempInfusingCount;
+		Engine.infusingExperience += Math.Min(Engine.infusingConcentrationRate, tempInfusingCount); 
 	},
 	
 	LevelingCheck: function() {
-		
-		if(Engine.attunementLevel < 0) {
-			Engine.attunementLevel++;
-		}
 		
 		if(Engine.manaLevel < (Engine.manaExperience - Engine.manaLevel)) {
 			Engine.manaLevel++;
@@ -234,11 +331,13 @@ var Engine = {
 		if(Engine.cuttingLevel < (Engine.cuttingExperience - Engine.cuttingLevel)) {
 			Engine.cuttingLevel++;
 			Engine.cuttingExperience = 0;
+			Engine.CuttingCrystalTypeCheck();
 		}
 		
 		if(Engine.infusingLevel < (Engine.infusingExperience - Engine.infusingLevel)) {
 			Engine.infusingLevel++;
 			Engine.infusingExperience = 0;
+			Engine.InfusingCrystalTypeCheck();
 		}
 		
 		if(Engine.creationLvel < (Engine.creationExperience - Engine.creationLevel)) {
@@ -250,124 +349,18 @@ var Engine = {
 			Engine.spellLevel++;
 			Engine.spellExperience = 0;
 		}
-	},
-	
-	// Contains all aspects of combat
-	Combat: function(value) {
 		
-	},
-	
-	// Updates the display
-	Display: function() {
+		Engine.AttunementExperienceCheck();
 		
-		// Basic Resources 
-		document.getElementById('mana').innerHTML = Engine.mana;
-		document.getElementById('roughCrystals').innerHTML = Engine.roughCrystals;
-		document.getElementById('cutCrystals').innerHTML = Engine.cutCrystals;
-		document.getElementById('infusedCrystals').innerHTML = Engine.infusedCrystals;
-		
-		// Rates and Chances
-		document.getElementById('manaRate').innerHTML = Engine.manaRate;
-		document.getElementById('cutRate').innerHTML = Engine.cutRate;
-		document.getElementById('infusingRate').innerHTML = Engine.infusingRate;
-		
-		// Player Levels
-		document.getElementById('attunementLevel').innerHTML = Engine.attunementLevel;
-		document.getElementById('manaLevel').innerHTML = Engine.manaLevel;
-		document.getElementById('crystallizingLevel').innerHTML = Engine.crystallizingLevel;
-		document.getElementById('cuttingLevel').innerHTML = Engine.cuttingLevel;
-		document.getElementById('infusingLevel').innerHTML = Engine.infusingLevel;
-		document.getElementById('creationLevel').innerHTML = Engine.creationLevel;
-		document.getElementById('spellLevel').innerHTML = Engine.spellLevel;
-		
-		// Types
-		document.getElementById('cuttingType').innerHTML = Engine.cuttingType;
-		document.getElementById('infusionType').innerHTML = Engine.infusionType;
-	},
-	
-	// Contains all of the information to be saved
-	playerData: {
-  
-	},
-	
-	// Saves the current game by converting the playerData object into a string and storing the string in localStorage
-	Save: function() {
-		
-		// Set time of save
-		Engine.playerData.timeLastPlayed = Date.now();
-		
-		// Convert playerData object into string
-		var tmpSaveFile = JSON.Stringify(Engine.playerData);
-		
-		// Store in localStorage
-		window.localStorage.setItem("Mage Quest Save File", tmpSaveFile);
-		
-		// News update
-		console.log("Saved!")
-	},
-	
-	// Checks if a save game is in the localStorage
-	// If save data is found the file is converted back into an object
-	Load: function() {
-		
-		// Checks for a save file
-		if(!window.localStorage.getItem("Mage Quest Save File")) {
-			
-			// News update
-			console.log("No save file present to load.");
-			
-		} else {
-			
-			// Get save file
-			var tmpSaveFile = window.localStorage.getItem("Mage Quest Save File");
-			
-			// Parse the save file
-			Engine.playerData = JSON.parse(tmpSaveFile);
-			
-			
-			// News update
-			console.log("Save file loaded successfully!");
-			
+		if(Engine.attunementExperience < (Engine.attunementExperience - Engine.attunmentLevelGate)) {
+			Engine.attunementLevel++;
+			Engine.attunmentLevelGate += 100;
 		}
 	},
 	
-	// Deletes any save games in localStorage
-	Delete: function() {
-		
-		// Checks for a save file
-		if (!window.localStorage.getItem("Mage Quest Save File")) {
-			
-			// News update
-			console.log("No save file present to delete.");
-			
-		} else {
-			
-			
-			// Remove the save file
-			window.localStorage.removeItem("Mage Quest Save File");
-			
-			// News update
-			console.log("Save file deleted successfully.");
-			
-		}
+	AttunementExperienceCheck: function() {
+		Engine.attunementExperience = Engine.manaLevel + Engine.crystallizingLevel + Engine.cuttingLevel + Engine.infusingLevel + Engine.creationLevel + Engine.spellLevel;
 	},
-	
-	//GolemCreation: function() {
-	//	// [Type, HP, Damage, Armor, Speed, Mana Cost, Type of focus, Focus Gems, Material Cost]
-	//	var golemCombined = [];
-	//	
-	//	golemCombined.push(
-	//		(golemSelectedInfusion + " " + magicSchool + " Golem of " + golemSelectedMaterial),
-	//		(golemSelectedInfusionHp + golemSelectedMaterialHp),
-	//		(golemSelectedInfusionDamage + golemSelectedMaterialDamage),
-	//		(golemSelectedInfusionArmor + golemSelectedMaterialArmor),
-	//		(golemSelectedInfusionSpeed + golemSelectedMaterialSpeed),
-	//		golemSelectedInfusionMana,
-	//		golemSelectedInfusionFocusGems,
-	//		golemSelectedMaterialCost);
-    //
-	//	Engine.golemArmy.push(golemCombined[0]);
-	//},
 	
 	Concentration: function(value) {
 		
@@ -415,7 +408,130 @@ var Engine = {
 		Engine.infusingConcentration = 0;
 		Engine.creationConcentration = 0;
 		Engine.castingConcentration = 0;
+	},
+	
+	// Contains all aspects of combat
+	Combat: function(value) {
+		
+	},
+	
+	// Updates the display
+	Display: function() {
+		
+		// Basic Resources 
+		document.getElementById('mana').innerHTML = Engine.mana;
+		document.getElementById('roughCrystals').innerHTML = Engine.roughCrystals;
+		document.getElementById('cutCrystals').innerHTML = Engine.cutCrystals;
+		document.getElementById('infusedCrystals').innerHTML = Engine.infusedCrystals;
+		
+		// Rates and Chances
+		document.getElementById('manaRate').innerHTML = Engine.manaDelta;
+		document.getElementById('cuttingRate').innerHTML = Engine.cuttingDelta;
+		document.getElementById('infusingRate').innerHTML = Engine.infusingDelta;
+		
+		// Player Levels
+		document.getElementById('attunementLevel').innerHTML = Engine.attunementLevel;
+		document.getElementById('manaLevel').innerHTML = Engine.manaLevel;
+		document.getElementById('crystallizingLevel').innerHTML = Engine.crystallizingLevel;
+		document.getElementById('cuttingLevel').innerHTML = Engine.cuttingLevel;
+		document.getElementById('infusingLevel').innerHTML = Engine.infusingLevel;
+		document.getElementById('creationLevel').innerHTML = Engine.creationLevel;
+		document.getElementById('spellLevel').innerHTML = Engine.spellLevel;
+		
+		// Types
+		document.getElementById('cuttingType').innerHTML = Engine.cuttingType;
+		document.getElementById('infusingType').innerHTML = Engine.infusingType;
+	},
+	
+	//// Contains all of the information to be saved
+	//playerData: {
+	//	
+	//},
+	
+	// Saves the current game by converting the playerData object into a string and storing the string in localStorage
+	Save: function() {
+		
+		// Set time of save
+		Engine.playerData.timeLastPlayed = Date.now();
+		
+		// Convert playerData object into string
+		var tmpSaveFile = JSON.Stringify(Engine.playerData);
+		
+		// Store in localStorage
+		window.localStorage.setItem("Mage Quest Save File", tmpSaveFile);
+		
+		// News update
+		console.log("Saved!")
+	},
+	
+	// Checks if a save game is in the localStorage
+	// If save data is found the file is converted back into an object
+	Load: function() {
+		
+		// Checks for a save file
+		if(!window.localStorage.getItem("Mage Quest Save File")) {
+			
+			// News update
+			console.log("No save file present to load.");
+			
+		} else {
+			
+			// Get save file
+			var tmpSaveFile = window.localStorage.getItem("Mage Quest Save File");
+			
+			// Parse the save file
+			Engine.playerData = JSON.parse(tmpSaveFile);
+			Engine.CuttingCrystalTypeCheck();
+			Engine.InfusingCrystalTypeCheck();
+			//Engine.Loading();
+			
+			// News update
+			console.log("Save file loaded successfully!");
+			
+		}
+	},
+	
+	//Loading: function() {
+	//	Engine.mana = Engine.playerData.manaSave;
+	//},
+	
+	// Deletes any save games in localStorage
+	Delete: function() {
+		
+		// Checks for a save file
+		if (!window.localStorage.getItem("Mage Quest Save File")) {
+			
+			// News update
+			console.log("No save file present to delete.");
+			
+		} else {
+			
+			
+			// Remove the save file
+			window.localStorage.removeItem("Mage Quest Save File");
+			
+			// News update
+			console.log("Save file deleted successfully.");
+			
+		}
 	}
+	
+	//GolemCreation: function() {
+	//	// [Type, HP, Damage, Armor, Speed, Mana Cost, Type of focus, Focus Gems, Material Cost]
+	//	var golemCombined = [];
+	//	
+	//	golemCombined.push(
+	//		(golemSelectedInfusion + " " + magicSchool + " Golem of " + golemSelectedMaterial),
+	//		(golemSelectedInfusionHp + golemSelectedMaterialHp),
+	//		(golemSelectedInfusionDamage + golemSelectedMaterialDamage),
+	//		(golemSelectedInfusionArmor + golemSelectedMaterialArmor),
+	//		(golemSelectedInfusionSpeed + golemSelectedMaterialSpeed),
+	//		golemSelectedInfusionMana,
+	//		golemSelectedInfusionFocusGems,
+	//		golemSelectedMaterialCost);
+    //
+	//	Engine.golemArmy.push(golemCombined[0]);
+	//}
 };
 
 window.onload = Engine.Init();
