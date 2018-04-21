@@ -1,8 +1,10 @@
 var Engine = {
 	
-	// Notes to self
+	// Updates and todo
 	// 4/3/18 - get save function up and running
 	// 4/4/18 - on to spells!
+	// 4/21/18 - At some point rounding will need to be taken care of for displayed numbers
+	// 4/21/18 - Go over cut and infusion types for flow
 	
 	// Basic Resources
 	mana: 0,
@@ -18,6 +20,7 @@ var Engine = {
 	crystallizingBase: 100,
 	cutCrystalBase: 0,
 	infusingBase: 0,
+	creationBase: 0,
 	
 	// Concentrations
 	manaConcentration: 0,
@@ -70,7 +73,7 @@ var Engine = {
 	infusingCap: 0.1,
 	
 	// Types
-	cuttingType: "Broken",
+	cuttingType: "Awfully",
 	infusingType: "Weakly",	
 	
 	golemArmy: [],
@@ -283,19 +286,19 @@ var Engine = {
 			Engine.infusingType = "Faintly";
 		} else if(Engine.infusingLevel > 20) {
 			Engine.infusingCap = 0.2;
-			Engine.infusingType = "Barely"
+			Engine.infusingType = "Minimally";
 		} else if(Engine.infusingLevel > 30) {
 			Engine.infusingCap = 0.3;
-			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.3";
+			Engine.infusingType = "Barely";
 		} else if(Engine.infusingLevel > 40) {
 			Engine.infusingCap = 0.4;
-			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.4";
+			Engine.infusingType = "Slightly";
 		} else if(Engine.infusingLevel > 50) {
 			Engine.infusingCap = 0.5;
 			Engine.infusingType = "Infused";
 		} else if(Engine.infusingLevel > 60) {
 			Engine.infusingCap = 0.6;
-			Engine.infusingType = "Precisely";
+			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.6";
 		} else if(Engine.infusingLevel > 70) {
 			Engine.infusingCap = 0.7;
 			Engine.infusingType = "Strongly";
@@ -307,7 +310,7 @@ var Engine = {
 			Engine.infusingType = "PLACE_HOLDER_INFUSING_0.9";
 		} else if(Engine.infusingLevel > 100) {
 			Engine.infusingCap = 1;
-			Engine.infusingType = "PLACE_HOLDER_INFUSING_1";
+			Engine.infusingType = "Precisely";
 		} else if(Engine.infusingLevel > 110) {
 			Engine.infusingCap = 2;
 			Engine.infusingType = "PLACE_HOLDER_INFUSING_2";
@@ -419,7 +422,9 @@ var Engine = {
 	},
 	// All objects will need to be declared in this function.
 	SpellsCombat: function(value) {
-		if(Engine.castingConcentration)
+		if(Engine.castingConcentration > 0) {
+					
+		}
 	},
 	
 	// Contains all aspects of combat
