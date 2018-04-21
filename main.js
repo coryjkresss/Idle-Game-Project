@@ -69,8 +69,9 @@ var Engine = {
 	attunmentLevelGate: 100,
 	
 	// Cut Crystal Max mana
-	cuttingMax: 10,
-	infusingCap: 0.1,
+	cuttingMax: 5,
+	infusingCap: 0.01,
+	infusedMana: 0,
 	
 	// Types
 	cuttingType: "Awfully",
@@ -185,7 +186,7 @@ var Engine = {
 		
 		Engine.manaRate = (Engine.manaBase * Engine.manaAdjustedLevel + Engine.manaConcentration * Engine.manaAdjustedLevel) * value;
 		Engine.manaConcentrationRate = Engine.manaConcentration * value;
-		// optimize this formula 
+		// Correct this formula 
 		Engine.crystallizationChance = Engine.crystallizingBase * Engine.crystallizingAdjustedLevel;
 		Engine.cuttingRate = (Engine.cutCrystalBase * Engine.cuttingAdjustedLevel + Engine.cuttingConcentration * Engine.cuttingAdjustedLevel) * value;
 		Engine.cuttingConcentrationRate = Engine.cuttingConcentration * value;
@@ -222,7 +223,7 @@ var Engine = {
 		}
     
 		while(i < value) {
-			if(Math.floor(Math.random() * 100) < tempCrystallizationChance) {
+			if(Math.floor(Math.random() * 101) <= tempCrystallizationChance) {
 				Engine.roughCrystals++;
 				
 				if(Engine.manaConcentration > 0) {
@@ -244,44 +245,44 @@ var Engine = {
 	},
 	
 	CuttingCrystalTypeCheck: function() {
-		if(Engine.cuttingLevel > 10) {
+		if(Engine.cuttingLevel >= 10) {
 			Engine.cuttingMax = 10;
 			Engine.cuttingType = "Haphazardly";
-		} else if(Engine.cuttingLevel > 20) {
+		} else if(Engine.cuttingLevel >= 20) {
 			Engine.cuttingMax = 20;
 			Engine.cuttingType = "Poorly";
-		} else if(Engine.cuttingLevel > 30) {
+		} else if(Engine.cuttingLevel >= 30) {
 			Engine.cuttingMax = 30;
 			Engine.cuttingType = "Asymmetrically"
-		} else if(Engine.cuttingLevel > 40) {
+		} else if(Engine.cuttingLevel >= 40) {
 			Engine.cuttingMax = 40;
 			Engine.cuttingType = "Symmetrically"
-		} else if(Engine.cuttingLevel > 50) {
+		} else if(Engine.cuttingLevel >= 50) {
 			Engine.cuttingMax = 50;
 			Engine.cuttingType = "Expertly";
-		} else if(Engine.cuttingLevel > 60) {
+		} else if(Engine.cuttingLevel >= 60) {
 			Engine.cuttingMax = 60;
 			Engine.cuttingType = "Beautifully";
-		} else if(Engine.cuttingLevel > 70) {
+		} else if(Engine.cuttingLevel >= 70) {
 			Engine.cuttingMax = 70;
 			Engine.cuttingType = "Dazzlingly";
-		} else if(Engine.cuttingLevel > 80) {
+		} else if(Engine.cuttingLevel >= 80) {
 			Engine.cuttingMax = 80;
 			Engine.cuttingType = "Brilliantly";
-		} else if(Engine.CuttingLevel > 90) {
+		} else if(Engine.CuttingLevel >= 90) {
 			Engine.cuttingMax = 90;
 			Engine.cuttingType = "Astonishingly";
-		} else if(Engine.cuttingLevel > 100) {
+		} else if(Engine.cuttingLevel >= 100) {
 			Engine.cuttingMax = 100;
 			Engine.cuttingType = "Scintillating";
-		} else if(Engine.cuttingLevel > 110) {
+		} else if(Engine.cuttingLevel >= 110) {
 			Engine.cuttingMax = 200;
 			Engine.cuttingType = "Iridescent";
 		}
 	},
 	
 	InfusingCrystalTypeCheck: function() {
-		if(Engine.infusingLevel > 10) {
+		if(Engine.infusingLevel >= 10) {
 			Engine.infusingCap = 0.1;
 			Engine.infusingType = "Faintly";
 		} else if(Engine.infusingLevel > 20) {
@@ -319,12 +320,13 @@ var Engine = {
 	
 	InfuseCrystals: function() {
    
-		var tempInfusingCount = Math.Min(Engine.infusingRate, Engine.cutCrystals, (Engine.mana/Engine.cuttingMax));
+		var tempInfusingCount = Math.Min(Engine.infusingRate, Engine.cutCrystals, Math.floor(Engine.mana/Engine.cuttingMax));
 		
 		Engine.mana -= tempInfusingCount * Engine.cuttingMax;
 		Engine.cutCrystals -= tempInfusingCount;
 		Engine.infusedCrystals += tempInfusingCount;
 		Engine.infusingExperience += Math.Min(Engine.infusingConcentrationRate, tempInfusingCount); 
+		Engine.infusedMana = Engine.cuttingMax * Engine.infusionCap;
 	},
 	
 	LevelingCheck: function() {
@@ -422,8 +424,8 @@ var Engine = {
 	},
 	// All objects will need to be declared in this function.
 	SpellsCombat: function(value) {
-		if(Engine.castingConcentration > 0) {
-					
+		if(Engine.castingConcentration > 0 && Engine.mana > SPELL_MANA_PLACE_HOLDER*value) {
+			
 		}
 	},
 	
