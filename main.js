@@ -268,16 +268,16 @@ var Engine = {
 			Engine.cuttingType = "Dazzlingly";
 		} else if(Engine.cuttingLevel >= 80) {
 			Engine.cuttingMax = 80;
-			Engine.cuttingType = "Brilliantly";
+			Engine.cuttingType = "Masterfully";
 		} else if(Engine.CuttingLevel >= 90) {
 			Engine.cuttingMax = 90;
 			Engine.cuttingType = "Astonishingly";
 		} else if(Engine.cuttingLevel >= 100) {
 			Engine.cuttingMax = 100;
-			Engine.cuttingType = "Scintillating";
+			Engine.cuttingType = "Brilliantly";
 		} else if(Engine.cuttingLevel >= 110) {
 			Engine.cuttingMax = 200;
-			Engine.cuttingType = "Iridescent";
+			Engine.cuttingType = "Iridescently";
 		}
 	},
 	
